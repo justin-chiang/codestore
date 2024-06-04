@@ -7,6 +7,12 @@
   "scripts": {
     "start": "node ./api/app.js",
     "dev": "nodemon ./api/app.js",
+    "lint": "eslint ./api/**",
+    "lint:fix": "eslint --fix ./api/**",
+    "format": "prettier --check ./api/**",
+    "format:fix": "prettier --write ./api/**",
+    "check:all": "npm run lint && npm run format",
+    "fix:all": "npm run lint:fix && npm run format:fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
