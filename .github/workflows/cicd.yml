@@ -1,0 +1,43 @@
+name: CI/CD Pipeline for Branch Push
+
+on:
+  push:
+
+jobs:
+  lint:
+    name: Lint Javascript (ESLint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+
+      - name: Install ESLint
+        run: npm i --save-dev eslint@8.57.0
+
+      - name: Run ESLint
+        run: npm run lint
+
+  format:
+    name: Format Javascript (Prettier)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+
+      - name: Install Prettier
+        run: npm i --save-dev prettier
+
+      - name: Run Prettier
+        run: npm run format
