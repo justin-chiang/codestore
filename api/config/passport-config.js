@@ -2,7 +2,7 @@ import passport from 'passport';
 import passportJwt from 'passport-jwt';
 import 'dotenv/config';
 
-import { dynamodb } from '../database/dynamodb.js';
+import { dynamodb } from '../services/dynamodb.js';
 
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;

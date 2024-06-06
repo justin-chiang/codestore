@@ -2,7 +2,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-import { dynamodb } from '../database/dynamodb.js';
+import { dynamodb } from '../services/dynamodb.js';
+import { s3 } from '../services/s3.js';
+
+const TABLE_NAME = 'users';
+const BUCKET_NAME = 'codespace-files';
 
 const register = async (req, res) => {
     try {
@@ -14,7 +18,7 @@ const register = async (req, res) => {
             });
         }
 
-        const existing = await dynamodb.readItem('users', { username });
+        const existing = await dynamodb.readItem(TABLE_NAME, { username });
         if (existing) {
             return res.status(409).json({
                 message: 'Error registering user',
@@ -27,7 +31,9 @@ const register = async (req, res) => {
             username,
             password: hash
         };
-        await dynamodb.createItem('users', user);
+        await dynamodb.createItem(TABLE_NAME, user);
+
+        await s3.uploadResource(BUCKET_NAME, `${username}/`, '');
 
         console.log('Registered successfully: ', user);
         res.status(201).json({
@@ -53,7 +59,7 @@ const login = async (req, res) => {
             });
         }
 
-        const user = await dynamodb.readItem('users', { username });
+        const user = await dynamodb.readItem(TABLE_NAME, { username });
         if (!user) {
             return res.status(404).json({
                 message: 'Error logging in user',
@@ -73,7 +79,7 @@ const login = async (req, res) => {
 
         const updateExpression = 'SET refreshToken = :r';
         const expressionAttributeValues = { ':r': refreshToken };
-        await dynamodb.updateItem('users', { username }, updateExpression, expressionAttributeValues);
+        await dynamodb.updateItem(TABLE_NAME, { username }, updateExpression, expressionAttributeValues);
 
         const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
@@ -104,7 +110,7 @@ const logout = async (req, res) => {
 
         const keyConditionExpression = 'refreshToken = :t';
         const expressionAttributeValues = { ':t': refreshToken };
-        const user = await dynamodb.queryItem('users', 'refreshToken-index', keyConditionExpression, expressionAttributeValues);
+        const user = await dynamodb.queryItem(TABLE_NAME, 'refreshToken-index', keyConditionExpression, expressionAttributeValues);
         if (!user) {
             return res.status(404).json({
                 message: 'Error logging out user',
@@ -113,7 +119,7 @@ const logout = async (req, res) => {
         }
 
         const updateExpression = 'REMOVE refreshToken';
-        await dynamodb.updateItem('users', { username: user.username }, updateExpression);
+        await dynamodb.updateItem(TABLE_NAME, { username: user.username }, updateExpression);
 
         console.log('Logged out successfully');
         res.status(200).json({
@@ -140,7 +146,7 @@ const token = async (req, res) => {
 
         const keyConditionExpression = 'refreshToken = :t';
         const expressionAttributeValues = { ':t': refreshToken };
-        const user = await dynamodb.queryItem('users', 'refreshToken-index', keyConditionExpression, expressionAttributeValues);
+        const user = await dynamodb.queryItem(TABLE_NAME, 'refreshToken-index', keyConditionExpression, expressionAttributeValues);
         if (!user) {
             return res.status(404).json({
                 message: 'Error creating access token',

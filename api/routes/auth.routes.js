@@ -321,7 +321,7 @@ router.post('/logout', logout);
 router.post('/token', token);
 
 router.get('/protected', passport.authenticate('jwt', { session: false }), (req, res) => {
-    res.json({ message: 'Protected route' });
+    res.json({ message: `Hello ${req.user.username}` });
 });
 
 export default router;
